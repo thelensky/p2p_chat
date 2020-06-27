@@ -26,3 +26,6 @@ dependencies {
     compile group: 'com.typesafe.akka', name: "akka-actor_2.12", version: '2.6.6'
     compile group: 'com.typesafe.akka', name: "akka-cluster_2.12", version: '2.6.6'
 }
+
+apply plugin: 'application'
+mainClassName = 'MainApp'
