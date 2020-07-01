@@ -1,16 +1,21 @@
-import akka.actor.ActorRef
-import javafx.collections.{FXCollections, ObservableList}
+import javafx.stage.Stage
 
-case class User(name: String, actorRef: Option[ActorRef])
+class Model extends ModelTrait {
+  private var ctxStage: Option[Stage] = None
 
-case class Msg(msg: String, user: User)
+  def setCtxStage(stage: Stage): Unit = ctxStage = Option(stage)
 
-case class ChatRoom(host: User, guest: User)
-
-object Model {
-  val msgList: ObservableList[Msg] = FXCollections.observableArrayList()
-  val usersList: ObservableList[User] = FXCollections.observableArrayList()
-  var hostUser: User = null
+  def getCtxStage = ctxStage.get
 }
 
+object Model {
+  var hostUser: Option[User] = None
+  var chatRooms: Set[ChatRoom] = Set()
+  var mainChatView: View = _
 
+  def apply(): Model = new Model()
+
+  def setHostUser(user: User): Unit = hostUser = Option(user)
+}
+
+case class ChatRoom(withUser: User, ctx: View)

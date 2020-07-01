@@ -23,7 +23,7 @@ trait WrapCell [S] {
             val l: Label = new Label(item)
             l.setWrapText(true)
             val box = new VBox(l)
-            l.heightProperty.addListener((observable, oldValue, newValue) => {
+            l.heightProperty.addListener((_, _, newValue) => {
                 box.setPrefHeight(newValue.doubleValue + 7)
                 Platform.runLater(() => this.getTableRow.requestLayout())
             })

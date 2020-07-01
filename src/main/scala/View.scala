@@ -1,14 +1,17 @@
 import java.net.URL
 import java.util.{Optional, ResourceBundle}
 
+import javafx.application.Platform
 import javafx.beans.property.ReadOnlyStringWrapper
-import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.TableColumn.CellDataFeatures
 import javafx.scene.control._
-import javafx.scene.input.MouseEvent
+import javafx.scene.input.{KeyCode, KeyEvent, MouseEvent}
 
 class View extends Initializable {
+
+  private var privateChat: Boolean = false
+  private val model: ModelTrait = Model()
 
   @FXML
   var msgField: TextArea = _
@@ -24,18 +27,43 @@ class View extends Initializable {
   var usersTable: TableView[User] = _
   @FXML
   var usersId: TableColumn[User, String] = _
+  @FXML
+  var scroll: ScrollPane = _
 
   @FXML
-  def sendMsg(actionEvent: ActionEvent): Unit = {
-    Controller.sendMsg(msgField.getText())
+  def handle(ke: KeyEvent): Unit = {
+    if (ke.getCode.getCode equals KeyCode.ENTER.getCode) {
+      sendMsg()
+    }
+  }
+
+  @FXML
+  def sendMsg(): Unit = {
+    Controller.pushMsg(this, msgField.getText())
     msgField.setText("")
   }
 
   @FXML
-  def openPrivateChat(e: MouseEvent) = {
-    println(usersTable.getSelectionModel.getSelectedItem.name)
-    usersTable.getSelectionModel.clearSelection()
+  def openPrivateChat(e: MouseEvent): Unit = {
+    if (usersTable.getSelectionModel != null && !privateChat) {
+      val user: Option[User] = Option(usersTable.getSelectionModel.getSelectedItem)
+      user match {
+        case user: Some[User] => {
+          Controller.openPrivateChat(user.get)
+          usersTable.getSelectionModel.clearSelection()
+        }
+        case _ =>
+      }
+    }
   }
+
+  def initPrivateChat(flag: Boolean): Unit = {
+    privateChat = flag
+    usersTable.setSelectionModel(null)
+    usersId.setSortable(false)
+  }
+
+  def getModel: ModelTrait = model
 
   def userNameImpute(): Unit = {
     val dialog = new TextInputDialog("User name")
@@ -45,8 +73,10 @@ class View extends Initializable {
     dialog.setContentText("Name:")
 
     val result: Optional[String] = dialog.showAndWait
-
-    result.ifPresent((name: String) => Controller.setHostUserName(name))
+    result.ifPresentOrElse((name: String) => Controller.setHostUserName(name), () => {
+      Platform.exit()
+      System.exit(0)
+    })
   }
 
 
@@ -54,18 +84,21 @@ class View extends Initializable {
     userId.setCellValueFactory((msg: CellDataFeatures[Msg, String]) => {
       new ReadOnlyStringWrapper(msg.getValue.user.name)
     })
+
     msgId.setCellValueFactory((msg: CellDataFeatures[Msg, String]) => {
       new ReadOnlyStringWrapper(msg.getValue.msg)
     })
+
     msgId.setCellFactory(MsgWrapCell.WRAPPING_CELL_FACTORY)
+
     usersId.setCellValueFactory((user: CellDataFeatures[User, String]) => {
       new ReadOnlyStringWrapper(user.getValue.name)
     })
 
-    chatTable.setItems(Model.msgList)
-    usersTable.setItems(Model.usersList)
+    chatTable.setItems(model.msgList)
+    usersTable.setItems(model.usersList)
     chatTable.setSelectionModel(null)
-    userNameImpute()
+    Model.hostUser getOrElse userNameImpute()
   }
 
 }

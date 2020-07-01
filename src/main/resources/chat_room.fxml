@@ -13,7 +13,7 @@
             <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
          </rowConstraints>
          <children>
-              <ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="5000.0" maxWidth="5000.0" prefHeight="500.0" prefWidth="400.0">
+              <ScrollPane fx:id="scroll" fitToHeight="true" fitToWidth="true" maxHeight="5000.0" maxWidth="5000.0" prefHeight="500.0" prefWidth="400.0">
                   <content>
                       <TableView fx:id="chatTable" maxHeight="5000.0" maxWidth="5000.0" prefHeight="500.0" prefWidth="400.0">
                           <columns>
@@ -48,7 +48,7 @@
                   <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
                </rowConstraints>
                <children>
-                      <TextArea fx:id="msgField" maxHeight="100.0" maxWidth="5000.0" prefHeight="100.0" prefWidth="500.0" />
+                      <TextArea fx:id="msgField" maxHeight="100.0" maxWidth="5000.0" onKeyPressed="#handle" prefHeight="100.0" prefWidth="500.0" />
                </children>
             </GridPane>
                 <Separator orientation="VERTICAL" prefHeight="100.0" />
@@ -56,18 +56,4 @@
             </children>
         </HBox>
     </bottom>
-    <!--   <top>-->
-    <!--      <MenuBar cacheShape="false" BorderPane.alignment="CENTER">-->
-    <!--        <menus>-->
-    <!--          <Menu mnemonicParsing="false" text="Menu">-->
-    <!--              <items>-->
-    <!--                  <MenuItem mnemonicParsing="false" text="Sign in" />-->
-    <!--              </items>-->
-    <!--            <items>-->
-    <!--              <MenuItem mnemonicParsing="false" text="Exit" />-->
-    <!--            </items>-->
-    <!--          </Menu>-->
-    <!--        </menus>-->
-    <!--      </MenuBar>-->
-    <!--   </top>-->
 </BorderPane>
