@@ -48,10 +48,9 @@ class View extends Initializable {
     if (usersTable.getSelectionModel != null && !privateChat) {
       val user: Option[User] = Option(usersTable.getSelectionModel.getSelectedItem)
       user match {
-        case user: Some[User] => {
+        case user: Some[User] =>
           Controller.openPrivateChat(user.get)
           usersTable.getSelectionModel.clearSelection()
-        }
         case _ =>
       }
     }

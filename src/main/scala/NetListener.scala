@@ -1,6 +1,6 @@
 import NetListener.{PrivateMsg, PublicMsg}
 import akka.actor.{Actor, ActorRef}
-import akka.cluster.ClusterEvent.{MemberJoined, MemberUp}
+import akka.cluster.ClusterEvent.MemberUp
 
 object NetListener {
 

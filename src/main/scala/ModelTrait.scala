@@ -1,5 +1,3 @@
-import java.time.LocalDate
-
 import akka.actor.ActorRef
 import javafx.collections.{FXCollections, ObservableList}
 

@@ -5,7 +5,7 @@ class Model extends ModelTrait {
 
   def setCtxStage(stage: Stage): Unit = ctxStage = Option(stage)
 
-  def getCtxStage = ctxStage.get
+  def getCtxStage: Stage = ctxStage.get
 }
 
 object Model {
