@@ -16,6 +16,7 @@ object Model {
   def apply(): Model = new Model()
 
   def setHostUser(user: User): Unit = hostUser = Option(user)
+
 }
 
 case class ChatRoom(withUser: User, ctx: View)

@@ -6,7 +6,6 @@ class MainApp extends Application {
   override def start(primaryStage: Stage): Unit = {
     val view: View = Controller.chatRoom(primaryStage, "p2p chat")
     Model.mainChatView = view
-    Controller.init(view)
   }
 }
 

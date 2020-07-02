@@ -1,7 +1,7 @@
 import akka.actor.ActorRef
-import javafx.collections.{FXCollections, ObservableList}
+import javafx.collections.{FXCollections, ObservableList, ObservableSet}
 
-case class User(name: String, actorRef: Option[ActorRef])
+case class User(name: String, actorRef: ActorRef)
 
 case class Msg(msg: String, user: User)
 

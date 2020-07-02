@@ -10,7 +10,7 @@ import javafx.scene.input.{KeyCode, KeyEvent, MouseEvent}
 
 class View extends Initializable {
 
-  private var privateChat: Boolean = false
+  private var isPrivateChat: Boolean = false
   private val model: ModelTrait = Model()
 
   @FXML
@@ -45,7 +45,7 @@ class View extends Initializable {
 
   @FXML
   def openPrivateChat(e: MouseEvent): Unit = {
-    if (usersTable.getSelectionModel != null && !privateChat) {
+    if (usersTable.getSelectionModel != null && !isPrivateChat) {
       val user: Option[User] = Option(usersTable.getSelectionModel.getSelectedItem)
       user match {
         case user: Some[User] =>
@@ -56,8 +56,10 @@ class View extends Initializable {
     }
   }
 
+  def getIsPrivateChat = isPrivateChat
+
   def initPrivateChat(flag: Boolean): Unit = {
-    privateChat = flag
+    isPrivateChat = flag
     usersTable.setSelectionModel(null)
     usersId.setSortable(false)
   }
@@ -72,7 +74,7 @@ class View extends Initializable {
     dialog.setContentText("Name:")
 
     val result: Optional[String] = dialog.showAndWait
-    result.ifPresentOrElse((name: String) => Controller.setHostUserName(name), () => {
+    result.ifPresentOrElse((name: String) => Controller.setHostUser(name), () => {
       Platform.exit()
       System.exit(0)
     })
