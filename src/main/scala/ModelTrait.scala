@@ -1,9 +1,9 @@
 import akka.actor.ActorRef
-import javafx.collections.{FXCollections, ObservableList, ObservableSet}
+import javafx.collections.{FXCollections, ObservableList}
 
-case class User(name: String, actorRef: ActorRef)
+final case class User(name: String, actorRef: ActorRef) extends JsonSerializable
 
-case class Msg(msg: String, user: User)
+final case class Msg(msg: String, user: User) extends JsonSerializable
 
 trait ModelTrait {
   val msgList: ObservableList[Msg] = FXCollections.observableArrayList()

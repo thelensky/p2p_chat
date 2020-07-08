@@ -1,40 +1,75 @@
-import akka.actor.Actor
+
+import akka.actor.{Actor, ActorLogging, ActorSelection}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
+import javafx.application.Platform
 
 object ChatListener {
 
-  trait Message
 
+  trait ChatCommands extends JsonSerializable
 
-  case class IAm(user: User) extends Message
+  final case class Init() extends ChatCommands
 
-  case class Chatting(msg: Msg, isPrivate: Boolean) extends Message
+  final case class IAm(user: User) extends ChatCommands
+
+  final case class Chatting(msg: Msg, isPrivate: Boolean) extends ChatCommands
+
 
 }
 
-case class ChatListener() extends Actor {
+class ChatListener() extends Actor with ActorLogging {
+  Controller.setFrameActor(self)
 
   import ChatListener._
+
+  var bufferActorRef: Set[ActorSelection] = Set()
+  var bufferUsers: Set[User] = Set()
 
   val cluster: Cluster = Cluster(context.system)
 
   override def preStart(): Unit = {
-    cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[UnreachableMember])
+    cluster.subscribe(self, initialStateMode = InitialStateAsEvents,
+      classOf[MemberEvent], classOf[UnreachableMember])
   }
 
   override def postStop(): Unit = cluster.unsubscribe(self)
 
   override def receive: Receive = {
-    case MemberUp(_) =>
-      context.sender() ! IAm(Model.hostUser.get)
-    case UnreachableMember(_) =>
-      Controller.deleteUser(sender())
-    case MemberRemoved(_, _) =>
-      Controller.deleteUser(sender())
-    case IAm(user: User) =>
-      Model.mainChatView.getModel.usersList.filtered(_ == user).add(user)
-    case Chatting(msg, isPrivate) => Controller.publishMsg(msg, isPrivate)
-    case _ =>
+    case MemberUp(member) =>
+      val actorSel = context.actorSelection(member.address.toString + "/user/chatListener")
+      val selfSel = context.actorSelection(self.path)
+      val model = Option(Model.mainChatView)
+      if (!selfSel.equals(actorSel)) {
+        model match {
+          case Some(_) => Model.hostUser.map(u => actorSel ! IAm(u))
+          case None => bufferActorRef += actorSel
+        }
+      }
+    case UnreachableMember(member) =>
+      log.info(s"[Listener] node is unreachable: $member")
+    case MemberRemoved(member, _) =>
+      log.info(s"[Listener] node is removed: $member")
+    case u: IAm =>
+      log.info(">> I Am <<")
+      val model = Option(Model.mainChatView)
+      model match {
+        case Some(_) =>
+          Platform.runLater(() => {
+            Model.mainChatView.getModel.usersList.add(u.user)
+          })
+        case None =>
+          bufferUsers += u.user
+      }
+    case _: Init =>
+      log.info(">> Init <<")
+      Platform.runLater(() => {
+        bufferUsers.foreach(user =>
+          Model.mainChatView.getModel.usersList.add(user)
+        )
+      })
+      Model.hostUser.map(u => bufferActorRef.foreach(_ ! IAm(u)))
+    case _: MemberEvent =>
+
   }
 }

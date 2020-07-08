@@ -56,7 +56,7 @@ class View extends Initializable {
     }
   }
 
-  def getIsPrivateChat = isPrivateChat
+  def getIsPrivateChat: Boolean = isPrivateChat
 
   def initPrivateChat(flag: Boolean): Unit = {
     isPrivateChat = flag
@@ -74,12 +74,14 @@ class View extends Initializable {
     dialog.setContentText("Name:")
 
     val result: Optional[String] = dialog.showAndWait
-    result.ifPresentOrElse((name: String) => Controller.setHostUser(name), () => {
+    result.ifPresentOrElse((name: String) => {
+      Controller.setHostUser(name)
+    }, () => {
       Platform.exit()
       System.exit(0)
     })
-  }
 
+  }
 
   override def initialize(location: URL, resources: ResourceBundle): Unit = {
     userId.setCellValueFactory((msg: CellDataFeatures[Msg, String]) => {
@@ -99,7 +101,7 @@ class View extends Initializable {
     chatTable.setItems(model.msgList)
     usersTable.setItems(model.usersList)
     chatTable.setSelectionModel(null)
-    Model.hostUser getOrElse userNameImpute()
+    Model.hostUser.getOrElse(userNameImpute)
   }
 
 }

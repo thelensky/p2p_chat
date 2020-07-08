@@ -13,19 +13,28 @@ repositories {
     mavenCentral()
 }
 
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'MainApp'
+        )
+    }
+}
+
 javafx {
     version = "14"
     modules = ['javafx.controls', 'javafx.fxml']
 }
 
 dependencies {
-    implementation 'org.scala-lang:scala-library:2.13.1'
-    testImplementation 'org.scalatest:scalatest_2.11:3.0.0'
+    implementation 'org.scala-lang:scala-library:2.13'
+    testImplementation 'org.scalatest:scalatest_2.13'
     testCompile group: 'org.scalatest', name: 'scalatest_2.13', version: '3.3.0-SNAP2'
-    compile group: 'com.typesafe.akka', name: "akka-actor_2.12", version: '2.6.6'
-    compile group: 'com.typesafe.akka', name: "akka-cluster_2.12", version: '2.6.6'
+    compile group: 'com.typesafe.akka', name: "akka-actor_2.13", version: '2.6.6'
+    compile group: 'com.typesafe.akka', name: "akka-cluster_2.13", version: '2.6.6'
+    compile group: 'com.typesafe.akka', name: "akka-serialization-jackson_2.13", version: '2.6.6'
 }
 
 apply plugin: 'application'
-mainClassName = 'MainApp'
+mainClassName = 'org.thelensky.MainApp'
 

@@ -1,10 +1,8 @@
+import ChatListener.Init
 import akka.actor.{ActorRef, ActorSystem}
-import com.typesafe.config.ConfigFactory
 import javafx.fxml.FXMLLoader
 import javafx.scene.{Parent, Scene}
 import javafx.stage.Stage
-
-import scala.jdk.CollectionConverters._
 
 object Controller {
   def publishMsg(msg: Msg, isPrivate: Boolean): Unit = {
@@ -38,7 +36,7 @@ object Controller {
     val message = Msg(msg, Model.hostUser.get)
     ctx.getModel.msgList.add(message)
     ctx.chatTable.scrollTo(Int.MaxValue)
-    Model.hostUser.foreach(_.actorRef ! ChatListener.Chatting(message, ctx.getIsPrivateChat))
+    ctx.getModel.usersList.forEach(_.actorRef ! ChatListener.Chatting(message, ctx.getIsPrivateChat))
   }
 
   def openPrivateChat(withUser: User): Unit = {
@@ -61,8 +59,11 @@ object Controller {
     }
   }
 
-  def setHostUser(name: String, ref: ActorRef = null): Unit =
-    Model.hostUser = Option(User(name, ref))
+  def setHostUser(name: String): Unit = {
+    val user: User = User(name, Model.frameActor)
+    Model.hostUser = Option(user)
+    user.actorRef ! Init()
+  }
 
 
   def chatRoom(stage: Stage, title: String): View = {
@@ -76,13 +77,13 @@ object Controller {
     view
   }
 
-  def startConnectionToNet(): Unit = {
-    val conf = ConfigFactory.load()
-    val listOfPorts = conf.getIntList("seed-ports").asScala.map(i => i.toInt)
+  // AKKA
+  def setPort(port: Int): Unit = Model.port = port
 
-    val hostname: String = conf.getString("akka.remote.artery.canonical.hostname")
-    val system = ActorSystem("Tcp")
+  def setFrameActor(actorRef: ActorRef): Unit = Model.frameActor = actorRef
 
-    system.actorOf(PortChecker.props(hostname, listOfPorts.iterator))
+  def setSystem(system: ActorSystem): Unit = {
+    println("system added")
+    Model.system = system
   }
 }

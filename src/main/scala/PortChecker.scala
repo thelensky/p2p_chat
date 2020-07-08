@@ -1,50 +1,31 @@
 import java.net.InetSocketAddress
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, Props}
 import akka.io.{IO, Tcp}
-import com.typesafe.config.ConfigFactory
+
+import scala.collection.mutable
 
 object PortChecker {
-  def props(hostname: String, ports: Iterator[Int]): Props =
-    if (ports.hasNext) {
-      Props(new PortChecker(hostname, ports))
-    }
-    else throw new RuntimeException("No ports exists!")
-
-  def startup(port: Int): ActorRef = {
-    val config = ConfigFactory.parseString(
-      s"""
-      akka.remote.artery.canonical.port=$port
-      """).withFallback(ConfigFactory.load())
-
-    val system = ActorSystem("ClusterSystem", config)
-    system.actorOf(Props[ChatListener], "chatListener")
-  }
+  def props(hostname: String, ports: mutable.Buffer[Int]): Props =
+    Props(new PortChecker(hostname, ports: mutable.Buffer[Int]))
 }
 
-class PortChecker(hostname: String, ports: Iterator[Int]) extends Actor {
+class PortChecker(hostname: String, ports: mutable.Buffer[Int]) extends Actor {
 
   import context.system
 
-  val port: Int = ports.next()
+  val connection: Iterator[Int] = ports.iterator
+  var port: Int = connection.next()
 
-  val remote: InetSocketAddress = new InetSocketAddress(hostname, port)
-
-  IO(Tcp) ! Tcp.Connect(remote)
+  IO(Tcp) ! Tcp.Connect(new InetSocketAddress(hostname, port))
 
   override def receive: Receive = {
     case Tcp.Connected(_, _) =>
-      system.actorOf(PortChecker.props(hostname, ports))
-      context.stop(self)
+      port = connection.next()
+      IO(Tcp) ! Tcp.Connect(new InetSocketAddress(hostname, port))
     case Tcp.CommandFailed(_: Tcp.Connect) =>
-      try {
-        if (Model.hostUser.get.name != null)
-          Controller.setHostUser(Model.hostUser.get.name, PortChecker.startup(port))
-      } catch {
-        case _: Throwable => throw new RuntimeException("User undefined!")
-      }
+      Controller.setPort(port)
       context.stop(self)
+      context.system.terminate()
   }
 }
-
-
