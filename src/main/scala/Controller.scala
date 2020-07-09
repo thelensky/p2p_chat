@@ -1,35 +1,26 @@
 import ChatListener.Init
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ActorContext, ActorRef, ActorSystem}
+import akka.cluster.Member
+import javafx.application.Platform
 import javafx.fxml.FXMLLoader
 import javafx.scene.{Parent, Scene}
 import javafx.stage.Stage
 
 object Controller {
-  def publishMsg(msg: Msg, isPrivate: Boolean): Unit = {
-    if (isPrivate) {
-      Model.chatRooms.find(_.withUser.actorRef == msg.user.actorRef).map(_.ctx.getModel.msgList.add(msg))
-    }
-    else {
-      Model.mainChatView.getModel.msgList.add(msg)
-    }
-  }
 
-  def deleteUser(sender: ActorRef): Option[Unit] = {
-    Model.mainChatView.getModel.usersList.removeIf(_.actorRef == sender)
-    Model.chatRooms.find(_.withUser.actorRef == sender).map(_.ctx.getModel.asInstanceOf[Model].getCtxStage.close())
-  }
-
-  def init(ctx: View): Unit = {
-    val user1 = User("Yuri", null)
-    val user2 = User("Ivan", null)
-    val model = ctx.getModel
-    model.usersList.add(user1)
-    model.usersList.add(user2)
-
-    val msg_1 = Msg("Hi", user1)
-    val msg_2 = Msg("Hi Yuri", user2)
-    ctx.getModel.msgList.addAll(msg_1, msg_2)
-    ()
+  def deleteUser(member: Member, context: ActorContext): Unit = {
+    val deadActor = context.actorSelection(member.address.toString + "/user/chatListener")
+    Platform.runLater(() => {
+      val model = Option(Model.mainChatView)
+      model match {
+        case Some(_) =>
+          Model.mainChatView.getModel.usersList.removeIf(u => context.actorSelection(u.actorRef.path).equals(deadActor))
+          Model.chatRooms
+            .find(u => context.actorSelection(u.withUser.actorRef.path) == deadActor)
+            .map(_.ctx.getModel.asInstanceOf[Model].getCtxStage.close())
+        case None =>
+      }
+    })
   }
 
   def pushMsg(ctx: View, msg: String): Unit = {
@@ -39,23 +30,36 @@ object Controller {
     ctx.getModel.usersList.forEach(_.actorRef ! ChatListener.Chatting(message, ctx.getIsPrivateChat))
   }
 
-  def openPrivateChat(withUser: User): Unit = {
+  def publishMsg(chat: ChatListener.Chatting, context: ActorContext): Unit =
+    Platform.runLater(() =>
+      if (chat.isPrivate) {
+        Model.chatRooms.find(_.withUser.actorRef eq context.sender()) match {
+          case Some(chR) => chR.ctx.getModel.msgList.add(chat.msg)
+          case None =>
+            val ctx: View = openPrivateChat(chat.msg.user)
+            ctx.getModel.msgList.add(chat.msg)
+        }
+      } else {
+        Model.mainChatView.getModel.msgList.add(chat.msg)
+      }
+    )
 
-    if (Model.chatRooms exists (chatRoom => chatRoom.withUser == withUser)) {
-      Model.chatRooms.filter(chatRoom => chatRoom.withUser == withUser).foreach(chatRoom => {
+  def openPrivateChat(withUser: User): View = {
+    Model.chatRooms.find(_.withUser == withUser) match {
+      case Some(chatRoom) =>
         chatRoom.ctx.getModel.asInstanceOf[Model].getCtxStage.requestFocus()
-      })
-    } else {
-      val stage = new Stage()
-      val ctx: View = chatRoom(stage, s"p2p private chat with ${withUser.name}")
-      ctx.initPrivateChat(true)
-      ctx.getModel.usersList.add(withUser)
-      val room: ChatRoom = ChatRoom(withUser, ctx)
-      Model.chatRooms += room
-      stage.setOnCloseRequest(_ => {
-        Model.chatRooms -= room
-      })
-      ()
+        chatRoom.ctx
+      case None =>
+        val stage = new Stage()
+        val ctx: View = chatRoom(stage, s"p2p private chat with ${withUser.name}")
+        ctx.initPrivateChat(true)
+        ctx.getModel.usersList.add(withUser)
+        val room: ChatRoom = ChatRoom(withUser, ctx)
+        Model.chatRooms += room
+        stage.setOnCloseRequest(_ => {
+          Model.chatRooms -= room
+        })
+        ctx
     }
   }
 
@@ -83,7 +87,6 @@ object Controller {
   def setFrameActor(actorRef: ActorRef): Unit = Model.frameActor = actorRef
 
   def setSystem(system: ActorSystem): Unit = {
-    println("system added")
     Model.system = system
   }
 }

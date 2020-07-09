@@ -6,7 +6,6 @@ import javafx.application.Platform
 
 object ChatListener {
 
-
   trait ChatCommands extends JsonSerializable
 
   final case class Init() extends ChatCommands
@@ -14,7 +13,6 @@ object ChatListener {
   final case class IAm(user: User) extends ChatCommands
 
   final case class Chatting(msg: Msg, isPrivate: Boolean) extends ChatCommands
-
 
 }
 
@@ -47,28 +45,29 @@ class ChatListener() extends Actor with ActorLogging {
         }
       }
     case UnreachableMember(member) =>
-      log.info(s"[Listener] node is unreachable: $member")
+      Controller.deleteUser(member, context)
     case MemberRemoved(member, _) =>
-      log.info(s"[Listener] node is removed: $member")
+      Controller.deleteUser(member, context)
+
     case u: IAm =>
-      log.info(">> I Am <<")
       val model = Option(Model.mainChatView)
       model match {
         case Some(_) =>
           Platform.runLater(() => {
             Model.mainChatView.getModel.usersList.add(u.user)
           })
+          cluster.joinSeedNodes(Seq(sender().path.address))
         case None =>
           bufferUsers += u.user
       }
     case _: Init =>
-      log.info(">> Init <<")
       Platform.runLater(() => {
         bufferUsers.foreach(user =>
           Model.mainChatView.getModel.usersList.add(user)
         )
       })
       Model.hostUser.map(u => bufferActorRef.foreach(_ ! IAm(u)))
+    case chat: Chatting => Controller.publishMsg(chat, context)
     case _: MemberEvent =>
 
   }

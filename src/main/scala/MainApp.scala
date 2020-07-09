@@ -14,7 +14,10 @@ class MainApp extends Application {
     Model.mainChatView = view
     primaryStage.setOnCloseRequest(_ => {
       Model.system.terminate()
-      Platform.exit()
+      Model.system.whenTerminated.map(_ => {
+        Platform.exit()
+        System.exit(0)
+      })(ExecutionContext.global)
     })
   }
 }
