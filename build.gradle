@@ -1,24 +1,17 @@
 plugins {
+    id 'java'
     id 'scala'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.8'
 }
 
-group 'org.example'
+group 'org.thelensky'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
-}
-
-jar {
-    manifest {
-        attributes(
-                'Main-Class': 'MainApp'
-        )
-    }
 }
 
 javafx {
@@ -32,9 +25,10 @@ dependencies {
     testCompile group: 'org.scalatest', name: 'scalatest_2.13', version: '3.3.0-SNAP2'
     compile group: 'com.typesafe.akka', name: "akka-actor_2.13", version: '2.6.6'
     compile group: 'com.typesafe.akka', name: "akka-cluster_2.13", version: '2.6.6'
+    compile group: 'com.typesafe.akka', name: "akka-cluster-tools_2.13", version: '2.6.6'
     compile group: 'com.typesafe.akka', name: "akka-serialization-jackson_2.13", version: '2.6.6'
 }
 
 apply plugin: 'application'
-mainClassName = 'org.thelensky.MainApp'
 
+mainClassName = 'MainApp'

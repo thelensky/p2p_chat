@@ -1,10 +1,11 @@
 import ChatListener.Init
-import akka.actor.{ActorContext, ActorRef, ActorSystem}
+import akka.actor.{ActorContext, ActorRef, ActorSystem, Props}
 import akka.cluster.Member
+import com.typesafe.config.ConfigFactory
 import javafx.application.Platform
 import javafx.fxml.FXMLLoader
 import javafx.scene.{Parent, Scene}
-import javafx.stage.Stage
+import javafx.stage.{Modality, Stage}
 
 object Controller {
 
@@ -17,7 +18,7 @@ object Controller {
           Model.mainChatView.getModel.usersList.removeIf(u => context.actorSelection(u.actorRef.path).equals(deadActor))
           Model.chatRooms
             .find(u => context.actorSelection(u.withUser.actorRef.path) == deadActor)
-            .map(_.ctx.getModel.asInstanceOf[Model].getCtxStage.close())
+            .map(_.ctx.getModel.asInstanceOf[Model].getCtxStage.map(_.close()))
         case None =>
       }
     })
@@ -47,7 +48,7 @@ object Controller {
   def openPrivateChat(withUser: User): View = {
     Model.chatRooms.find(_.withUser == withUser) match {
       case Some(chatRoom) =>
-        chatRoom.ctx.getModel.asInstanceOf[Model].getCtxStage.requestFocus()
+        chatRoom.ctx.getModel.asInstanceOf[Model].getCtxStage.foreach(_.requestFocus())
         chatRoom.ctx
       case None =>
         val stage = new Stage()
@@ -63,10 +64,10 @@ object Controller {
     }
   }
 
-  def setHostUser(name: String): Unit = {
-    val user: User = User(name, Model.frameActor)
+  def setHostUser(name: String, actorRef: ActorRef): Unit = {
+    val user: User = User(name, actorRef)
     Model.hostUser = Option(user)
-    user.actorRef ! Init()
+    actorRef ! Init()
   }
 
 
@@ -81,12 +82,34 @@ object Controller {
     view
   }
 
+  def enterForm(primaryStage: Stage): Unit = {
+    val stage = new Stage()
+    val loader = new FXMLLoader(getClass.getResource("enter-form.fxml"))
+    val root: Parent = loader.load()
+    stage.setScene(new Scene(root))
+    stage.initModality(Modality.WINDOW_MODAL)
+    stage.initOwner(primaryStage)
+    stage.show()
+    loader.getController.asInstanceOf[EnterForm].stage = stage
+  }
+
+  def addUser(user: User): Unit = {
+    val list = Model.mainChatView.getModel.usersList
+    if (!list.contains(user)) Platform.runLater(() => list.add(user))
+  }
+
+  def printHostAndPort(ctx: View, host: String, port: Int): Unit = Platform.runLater(() => {
+    ctx.setLabelId(s"$host : $port")
+  })
+
   // AKKA
-  def setPort(port: Int): Unit = Model.port = port
-
-  def setFrameActor(actorRef: ActorRef): Unit = Model.frameActor = actorRef
-
   def setSystem(system: ActorSystem): Unit = {
     Model.system = system
   }
+
+  def startCluster(host: Option[String], port: Option[Int]): ActorRef = {
+    val props = ChatListener.props(host, port)
+    Model.system.actorOf(props, "chatListener")
+  }
+
 }

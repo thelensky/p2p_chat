@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -38,17 +39,22 @@
         </ScrollPane>
     </right>
     <bottom>
-        <HBox maxHeight="100.0" maxWidth="5000.0" minWidth="50.0" prefHeight="100.0" prefWidth="600.0" BorderPane.alignment="CENTER">
+        <HBox maxHeight="100.0" maxWidth="5000.0" minWidth="50.0" prefHeight="100.0" prefWidth="599.0" BorderPane.alignment="CENTER">
             <children>
             <GridPane maxHeight="100.0" maxWidth="5000.0" prefHeight="100.0" prefWidth="500.0" HBox.hgrow="ALWAYS">
                <columnConstraints>
                   <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
                </columnConstraints>
                <rowConstraints>
-                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="79.0" minHeight="10.0" prefHeight="73.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="32.0" minHeight="10.0" prefHeight="27.0" vgrow="SOMETIMES" />
                </rowConstraints>
                <children>
                       <TextArea fx:id="msgField" maxHeight="100.0" maxWidth="5000.0" onKeyPressed="#handle" prefHeight="100.0" prefWidth="500.0" />
+                  <Label fx:id="labelId" GridPane.rowIndex="1">
+                     <GridPane.margin>
+                        <Insets left="10.0" />
+                     </GridPane.margin></Label>
                </children>
             </GridPane>
                 <Separator orientation="VERTICAL" prefHeight="100.0" />

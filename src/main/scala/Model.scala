@@ -6,18 +6,14 @@ class Model extends ModelTrait {
 
   def setCtxStage(stage: Stage): Unit = ctxStage = Option(stage)
 
-  def getCtxStage: Stage = ctxStage.get
+  def getCtxStage: Option[Stage] = ctxStage
 }
 
 object Model {
   var system: ActorSystem = _
-
   var hostUser: Option[User] = None
   var chatRooms: Set[ChatRoom] = Set()
   var mainChatView: View = _
-  var frameActor: ActorRef = _
-  var port: Int = _
-  var online: Set[ActorRef] = Set()
 
   def apply(): Model = new Model()
 

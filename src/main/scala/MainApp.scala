@@ -1,21 +1,20 @@
-import akka.actor.{ActorSystem, Props}
+import akka.actor.ActorSystem
 import com.typesafe.config.{Config, ConfigFactory}
-import javafx.application.{Application, Platform}
 import javafx.application.Application.launch
+import javafx.application.{Application, Platform}
 import javafx.stage.Stage
 
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext
-import scala.jdk.CollectionConverters._
 
 class MainApp extends Application {
   override def start(primaryStage: Stage): Unit = {
     val view: View = Controller.chatRoom(primaryStage, "p2p chat")
     Model.mainChatView = view
+    Controller.enterForm(primaryStage)
     primaryStage.setOnCloseRequest(_ => {
       Model.system.terminate()
+      Platform.exit()
       Model.system.whenTerminated.map(_ => {
-        Platform.exit()
         System.exit(0)
       })(ExecutionContext.global)
     })
@@ -24,22 +23,9 @@ class MainApp extends Application {
 
 object MainApp {
   def main(args: Array[String]): Unit = {
-    val conf: Config = ConfigFactory.load("application.conf")
-    val listOfPorts: mutable.Buffer[Int] = conf.getIntList("seed-ports").asScala.map(_.toInt)
-    val hostname: String = conf.getString("hostname")
-    val system = ActorSystem()
-    val props = PortChecker.props(hostname, listOfPorts)
-    props.withDispatcher("javafx-dispatcher")
-    system.actorOf(props, "check-port-actor")
-    system.whenTerminated.map(_ => {
-      val config = ConfigFactory.parseString(s"""akka.remote.artery.canonical.port=${Model.port}""")
-        .withFallback(ConfigFactory.load("cluster-akka.conf"))
-      val system = ActorSystem("ClusterSystem", config)
-      val props = Props[ChatListener]
-
-      Controller.setSystem(system)
-      system.actorOf(props, "chatListener")
-    })(ExecutionContext.global)
+    val conf: Config = ConfigFactory.load("cluster-akka.conf")
+    val system = ActorSystem("ClusterSystem", conf)
+    Controller.setSystem(system)
     launch(classOf[MainApp], args: _*)
   }
 }

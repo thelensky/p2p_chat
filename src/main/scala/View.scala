@@ -1,7 +1,6 @@
 import java.net.URL
-import java.util.{Optional, ResourceBundle}
+import java.util.ResourceBundle
 
-import javafx.application.Platform
 import javafx.beans.property.ReadOnlyStringWrapper
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.TableColumn.CellDataFeatures
@@ -29,6 +28,8 @@ class View extends Initializable {
   var usersId: TableColumn[User, String] = _
   @FXML
   var scroll: ScrollPane = _
+  @FXML
+  var labelId: Label = _
 
   @FXML
   def handle(ke: KeyEvent): Unit = {
@@ -44,7 +45,7 @@ class View extends Initializable {
   }
 
   @FXML
-  def openPrivateChat(e: MouseEvent): Unit = {
+  def openPrivateChat(): Unit = {
     if (usersTable.getSelectionModel != null && !isPrivateChat) {
       val user: Option[User] = Option(usersTable.getSelectionModel.getSelectedItem)
       user match {
@@ -66,20 +67,20 @@ class View extends Initializable {
 
   def getModel: ModelTrait = model
 
-  def userNameImpute(): Unit = {
-    val dialog = new TextInputDialog("User name")
-
-    dialog.setTitle(null)
-    dialog.setHeaderText("Enter your name:")
-    dialog.setContentText("Name:")
-
-    val result: Optional[String] = dialog.showAndWait
-    result.ifPresentOrElse((name: String) => {
-      Controller.setHostUser(name)
-    }, () => {
-      Platform.exit()
-      System.exit(0)
-    })
+  def initImpute(): Unit = {
+    //    val dialog = new TextInputDialog("User name")
+    //
+    //    dialog.setTitle(null)
+    //    dialog.setHeaderText("Enter your name:")
+    //    dialog.setContentText("Name:")
+    //
+    //    val result: Optional[String] = dialog.showAndWait
+    //    result.ifPresentOrElse((name: String) => {
+    //      Controller.setHostUser(name)
+    //    }, () => {
+    //      Platform.exit()
+    //      System.exit(0)
+    //    })
 
   }
 
@@ -101,8 +102,10 @@ class View extends Initializable {
     chatTable.setItems(model.msgList)
     usersTable.setItems(model.usersList)
     chatTable.setSelectionModel(null)
-    Model.hostUser.getOrElse(userNameImpute)
+    //    Model.hostUser.getOrElse(initImpute)
   }
+
+  def setLabelId(string: String) = this.labelId.setText(string)
 
 }
 
