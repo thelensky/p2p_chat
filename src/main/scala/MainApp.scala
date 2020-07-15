@@ -1,3 +1,5 @@
+import java.net.NetworkInterface
+
 import akka.actor.ActorSystem
 import com.typesafe.config.{Config, ConfigFactory}
 import javafx.application.Application.launch
@@ -23,7 +25,21 @@ class MainApp extends Application {
 
 object MainApp {
   def main(args: Array[String]): Unit = {
-    val conf: Config = ConfigFactory.load("cluster-akka.conf")
+    var conf: Config = ConfigFactory.load("cluster-akka.conf")
+    //
+    val n = NetworkInterface.getNetworkInterfaces
+    while (n.hasMoreElements) {
+      val e = n.nextElement
+      val a = e.getInetAddresses
+      while (a.hasMoreElements) {
+        val addr = a.nextElement
+        if (addr.getHostAddress.startsWith("192")) {
+          conf = ConfigFactory.parseString(s"""akka.remote.artery.canonical.hostname=${addr.getHostAddress}""")
+            .withFallback(ConfigFactory.load("cluster-akka.conf"))
+        }
+      }
+    }
+    //
     val system = ActorSystem("ClusterSystem", conf)
     Controller.setSystem(system)
     launch(classOf[MainApp], args: _*)
